@@ -182,7 +182,12 @@ async function consultarTodasPaginasSAP(urlInicial, token, urlBase = URL_MODELO)
 // MONTA A URL DE CONSULTA DO MODELO
 // ======================================================
 // Os campos selecionados são sempre os mesmos: o Datasphere
-// já devolve VL_PADRAO somado por cliente / grupo espécie / espécie.
+// já devolve VL_PADRAO somado por cliente / grupo espécie / marca.
+//
+// Obs.: até 12/11/2026 a consulta usava CD_ESPECIE_Produto (código
+// da espécie: SDF, SDV, SUC, ISO...). Esse campo foi removido do
+// modelo no SAP, por isso Sucos e Powerade passaram a ser separados
+// pela marca (DS_MARCA_Produto). Validado: mesmos totais da regra antiga.
 
 function montarUrlConsulta(filtro) {
 
@@ -193,7 +198,7 @@ function montarUrlConsulta(filtro) {
         `?$select=` +
         `CD_CLIENTE,` +
         `DS_GRUPO_ESPECIE_Produto,` +
-        `CD_ESPECIE_Produto,` +
+        `DS_MARCA_Produto,` +
         `VL_PADRAO` +
 
         `&$filter=` +
@@ -207,12 +212,15 @@ function montarUrlConsulta(filtro) {
 // ======================================================
 // Refrigerantes, Cerveja e Destilados vêm do Grupo Espécie.
 // Sucos e Powerade estão dentro do grupo "Still" e são
-// separados pela espécie:
-//   Sucos    = SDF, SDV (Del Valle) e SUC (Kapo)
-//   Powerade = ISO
-// Demais espécies do Still (Monster, Leão, Ades...) ficam fora.
+// separados pela marca:
+//   Sucos    = toda marca que começa com "Del Valle"
+//              (Del Valle, Del Valle +, Del Valle 100%, Del Valle Frut)
+//              e "Kapo"   (antigas espécies SDF, SDV e SUC)
+//   Powerade = marca "Powerade"   (antiga espécie ISO)
+// Demais marcas do Still (Monster, Leão Ice Tea, Ades, Reign...) ficam fora.
+// Atenção: uma marca nova de suco com outro nome precisa ser incluída aqui.
 
-function classificarCategoria(grupoEspecie, especie) {
+function classificarCategoria(grupoEspecie, marca) {
 
     switch (grupoEspecie) {
 
@@ -224,13 +232,21 @@ function classificarCategoria(grupoEspecie, especie) {
 
         case "Destilados":
             return "DESTILADOS";
+
+        case "Still":
+            break; // separado pela marca, logo abaixo
+
+        default:
+            return null; // Água, Bomboniere, Artd, Outros...: fora do painel
     }
 
-    if (["SDF", "SDV", "SUC"].includes(especie)) {
+    marca = String(marca || "").trim();
+
+    if (marca.startsWith("Del Valle") || marca === "Kapo") {
         return "SUCOS";
     }
 
-    if (especie === "ISO") {
+    if (marca === "Powerade") {
         return "POWERADE";
     }
 
@@ -274,7 +290,7 @@ function consolidarPorPV(dadosBasis, dadosOnline) {
 
             const categoria = classificarCategoria(
                 item.DS_GRUPO_ESPECIE_Produto,
-                item.CD_ESPECIE_Produto
+                item.DS_MARCA_Produto
             );
 
             if (!pv || !categoria) continue;
