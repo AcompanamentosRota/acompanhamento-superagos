@@ -165,7 +165,7 @@
   <!-- ==================== USUÁRIOS ====================
        Todos os usuários podem criar, resetar senha e excluir
        (exceto o próprio usuário). Tabela gerada pelo admin.js. -->
-  <section class="admin-section">
+  <section class="admin-section" id="secUsuarios">
     <div class="admin-titulo-linha">
       <h2 class="admin-h2"><span class="admin-step icone">&#128100;</span> Usuários do admin</h2>
       <button class="admin-btn" id="btnNovoUsuario" type="button">+ Novo usuário</button>
@@ -268,6 +268,8 @@
      1) SheetJS: lê e gera planilhas Excel no navegador;
      2) admin.js: lógica desta tela. -->
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<!-- github.js: no link publicado, o admin lê e grava as metas no GitHub -->
+<script src="js/github.js"></script>
 <script src="js/admin.js"></script>
 
 </body>

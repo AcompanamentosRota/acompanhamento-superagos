@@ -9,6 +9,9 @@
      e o admin.html é aberto. Ela vale 8 horas ou até clicar em "Sair".
    - index.html?login=1 já abre com o modal (usado pelo admin.html
      quando a sessão expira).
+   - No link publicado (GitHub Pages) não existe a API: o modal pede a
+     chave de acesso do GitHub, conferida em js/github.js e guardada no
+     navegador (localStorage).
    ===================================================================== */
 
 (function(){
@@ -19,15 +22,6 @@
   // Nome da chave de sessão no sessionStorage (o admin.js usa o mesmo)
   var CHAVE_SESSAO = 'superagosAdminChave';
 
-  // Painel publicado no GitHub Pages (link do time comercial): lá não
-  // existe API, então o admin não funciona. Esconde o botão e para aqui.
-  // O admin continua acessível pela API local (http://localhost:3000).
-  if (/\.github\.io$/i.test(location.hostname)) {
-    // style.display (e não "hidden"): o CSS do botão define display
-    document.getElementById('btnAdmin').style.display = 'none';
-    return;
-  }
-
   var modal = document.getElementById('loginModal');
   var form = document.getElementById('loginForm');
   var usuario = document.getElementById('loginUsuario');
@@ -35,19 +29,41 @@
   var erro = document.getElementById('loginErro');
   var botaoEntrar = document.getElementById('loginEntrar');
 
+  // ---------- Link publicado (GitHub Pages): login pelo GitHub ----------
+  // Lá não existe a nossa API. O modal pede a chave de acesso (token)
+  // do GitHub no lugar de usuário e senha (ver js/github.js).
+  var GH = window.SuperAgosGitHub;
+  var modoGitHub = !!(GH && GH.ativo);
+
+  if (modoGitHub){
+    // Esconde o campo "Usuário" (o GitHub já sabe quem é pela chave)
+    usuario.required = false;
+    usuario.closest('.field').style.display = 'none'; // (o CSS de .field define display)
+    // Campo da senha vira o campo da chave
+    document.querySelector('label[for="loginSenha"]').textContent = 'Chave de acesso do GitHub (token)';
+    senha.autocomplete = 'off';
+    senha.placeholder = 'github_pat_... ou ghp_...';
+    modal.querySelector('.modal-texto').textContent =
+      'Cole a sua chave de acesso do GitHub. Ela fica salva só neste navegador ' +
+      'e só funciona para quem é colaborador do repositório.';
+  }
+
   // ---------- Abrir / fechar ----------
   function abrir(){
     erro.hidden = true;
     senha.value = '';
     modal.hidden = false;
-    usuario.focus();
+    (modoGitHub ? senha : usuario).focus();
   }
   function fechar(){
     modal.hidden = true;
   }
 
-  // Botão "Admin": abre o modal em vez de navegar
+  // Botão "Admin": abre o modal em vez de navegar.
+  // No link publicado, se a chave já está salva neste navegador,
+  // vai direto (o admin confere a chave ao abrir).
   document.getElementById('btnAdmin').addEventListener('click', function(e){
+    if (modoGitHub && GH.lerToken()) return; // segue o link para admin.html
     e.preventDefault();
     abrir();
   });
@@ -67,12 +83,36 @@
     erro.hidden = false;
   }
 
+  // Botão volta ao normal depois de uma tentativa
+  function liberarBotao(){
+    botaoEntrar.disabled = false;
+    botaoEntrar.textContent = 'Entrar';
+  }
+
   form.addEventListener('submit', function(e){
     e.preventDefault(); // não recarrega a página
     erro.hidden = true;
     botaoEntrar.disabled = true;
     botaoEntrar.textContent = 'Entrando...';
 
+    // Link publicado: confere a chave no GitHub e guarda no navegador
+    if (modoGitHub){
+      var token = senha.value.trim();
+      GH.validarChave(token)
+        .then(function(){
+          GH.salvarToken(token);
+          location.href = 'admin.html';
+        })
+        .catch(function(x){
+          mostrarErro(x.message);
+          senha.value = '';
+          senha.focus();
+        })
+        .then(liberarBotao);
+      return;
+    }
+
+    // API local: usuário e senha
     fetch(API + '/api/login', {
       method: 'POST',
       headers: {'Content-Type': 'application/json'},
@@ -98,10 +138,7 @@
         senha.value = '';
         senha.focus();
       })
-      .then(function(){
-        botaoEntrar.disabled = false;
-        botaoEntrar.textContent = 'Entrar';
-      });
+      .then(liberarBotao);
   });
 
   // ---------- Abrir automaticamente (index.html?login=1) ----------

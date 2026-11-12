@@ -9,8 +9,14 @@
      4) ao salvar, envia a lista para a API (POST /api/admin/metas),
         que grava dados/metas.json e regera o painel.
 
-   Hoje a gravação é feita pela API local (server.js). Quando o projeto
-   for para o GitHub, só a função salvarMetas() muda.
+   Dois modos:
+     - API local (http://localhost:3000/admin.html): login com usuário e
+       senha; a API grava o metas.json, regera o painel e envia ao GitHub.
+     - Link publicado (GitHub Pages): não existe API. O login é a chave
+       de acesso do GitHub e as metas são lidas/gravadas direto no
+       repositório (js/github.js). A gravação dispara o workflow que
+       consulta o SAP e publica o painel. Usuários e senha ficam a cargo
+       do GitHub (colaboradores do repositório): essas partes da tela somem.
    ===================================================================== */
 
 (function(){
@@ -20,18 +26,27 @@
   // Aberta direto do disco (file://): aponta para a API local.
   var API = location.protocol === 'file:' ? 'http://localhost:3000' : '';
 
+  // ---------- Modo GitHub (link publicado) ----------
+  var GH = window.SuperAgosGitHub;
+  var modoGitHub = !!(GH && GH.ativo);
+  var tokenGH = modoGitHub ? GH.lerToken() : ''; // chave do GitHub salva no navegador
+  var autorGH = '';      // login do GitHub de quem está usando
+  var shaAtual = null;   // versão do metas.json lida (exigida para gravar)
+
   // ---------- Login ----------
-  // A chave de sessão é criada pelo modal de login do painel (js/login.js)
-  // e guardada na aba. Sem ela, volta para o painel com o modal aberto.
+  // API local: a chave de sessão é criada pelo modal de login do painel
+  // (js/login.js) e guardada na aba. Sem ela (ou sem a chave do GitHub,
+  // no link publicado), volta para o painel com o modal aberto.
   var CHAVE_SESSAO = 'superagosAdminChave';
   var chave = null;
   try { chave = sessionStorage.getItem(CHAVE_SESSAO); } catch (x) {}
 
   function irParaLogin(){
     try { sessionStorage.removeItem(CHAVE_SESSAO); } catch (x) {}
+    if (modoGitHub) GH.apagarToken(); // chave inválida/expirada: pede de novo
     location.replace('index.html?login=1');
   }
-  if (!chave){ irParaLogin(); return; }
+  if (modoGitHub ? !tokenGH : !chave){ irParaLogin(); return; }
 
   // Cabeçalho enviado em todas as chamadas de admin
   function cabecalhos(extra){
@@ -40,8 +55,14 @@
     return h;
   }
 
-  // Botão "Sair": invalida a chave na API e volta para o painel
+  // Botão "Sair": invalida a chave na API e volta para o painel.
+  // No link publicado: apaga a chave do GitHub deste navegador.
   document.getElementById('btnSair').addEventListener('click', function(){
+    if (modoGitHub){
+      GH.apagarToken();
+      location.href = 'index.html';
+      return;
+    }
     fetch(API + '/api/logout', {method:'POST', headers: cabecalhos()})
       .catch(function(){})
       .then(function(){
@@ -120,14 +141,28 @@
   // 1. LISTA ATUAL
   // =====================================================================
 
-  function carregarAtual(){
-    fetch(API + '/api/admin/metas', {headers: cabecalhos()})
+  // Busca o metas.json atual: no GitHub (link publicado) ou na API local
+  function buscarMetas(){
+    if (modoGitHub){
+      return GH.lerMetas(tokenGH).then(function(r){
+        shaAtual = r.sha; // guardado para gravar depois
+        return r.dados;
+      }, function(e){
+        if (e.status === 401){ irParaLogin(); throw null; } // chave expirou
+        throw e;
+      });
+    }
+    return fetch(API + '/api/admin/metas', {headers: cabecalhos()})
       .then(function(r){
         // Sessão expirada (8 h) ou API reiniciada: pede login de novo
         if (r.status === 401){ irParaLogin(); throw null; }
         if (!r.ok) throw new Error('HTTP '+r.status);
         return r.json();
-      })
+      });
+  }
+
+  function carregarAtual(){
+    buscarMetas()
       .then(function(dados){
         $('main').hidden = false; // login confirmado: mostra a tela
         atual = dados;
@@ -140,11 +175,17 @@
       })
       .catch(function(e){
         if (e === null) return; // já redirecionou para o login
-        // API desligada ou inacessível
+        // API desligada ou inacessível (ou erro do GitHub)
         $('main').hidden = false;
-        $('msgApi').hidden = false;
+        mostrarErroConexao(e);
         $('infoAtual').textContent = 'Não foi possível carregar a lista atual.';
       });
+  }
+
+  // Aviso no topo quando não dá para falar com a API / GitHub
+  function mostrarErroConexao(e){
+    if (modoGitHub) $('msgApi').innerHTML = '<b>Erro ao acessar o GitHub:</b> ' + esc((e && e.message) || 'sem detalhe');
+    $('msgApi').hidden = false;
   }
 
   // Gera e baixa a planilha com os PVs e metas atuais (serve de modelo)
@@ -395,9 +436,33 @@
   // 4. SALVAR
   // =====================================================================
 
-  // Envia a lista para a API, que grava dados/metas.json e regera o painel.
-  // (No GitHub, esta função passará a gravar o arquivo no repositório.)
+  // API local: envia a lista para a API, que grava dados/metas.json,
+  // regera o painel e envia ao GitHub.
+  // Link publicado: grava o dados/metas.json direto no repositório; o
+  // commit dispara o workflow que consulta o SAP e publica o painel.
+  // Nos dois casos devolve {status, mensagem, resumo?, github?}.
   function salvarMetas(conteudo){
+    if (modoGitHub){
+      conteudo.origem += ' (por ' + autorGH + ')'; // quem salvou fica no arquivo
+      return GH.gravarMetas(tokenGH, conteudo, shaAtual, autorGH)
+        .then(function(){
+          return {
+            status: 'sucesso',
+            mensagem: 'Metas salvas no GitHub.',
+            github: {
+              status: 'ok',
+              mensagem: 'O painel publicado é atualizado em cerca de 2 minutos (consulta ao SAP + publicação). ' +
+                        'Depois disso, recarregue o painel.'
+            }
+          };
+        }, function(e){
+          if (e.status === 401){
+            alert('Sua chave do GitHub expirou ou foi revogada. Entre novamente e suba a planilha de novo.');
+            irParaLogin();
+          }
+          throw e;
+        });
+    }
     return fetch(API + '/api/admin/metas', {
       method: 'POST',
       headers: cabecalhos({'Content-Type': 'application/json'}),
@@ -648,8 +713,29 @@
   // =====================================================================
   // INÍCIO
   // =====================================================================
-  // Confere a sessão: sem login volta ao painel; com a senha inicial
-  // abre a troca obrigatória; senão carrega a lista atual.
+  // Link publicado: confere a chave no GitHub, mostra o nome da pessoa,
+  // esconde o que é da API local (senha e usuários) e carrega as metas.
+  if (modoGitHub){
+    $('btnSenha').style.display = 'none';
+    $('secUsuarios').style.display = 'none';
+    GH.validarChave(tokenGH)
+      .then(function(u){
+        autorGH = u.login;
+        $('badgeUsuarioNome').textContent = u.nome;
+        $('badgeUsuario').hidden = false;
+        carregarAtual();
+      })
+      .catch(function(e){
+        // Chave inválida/revogada: pede de novo. Outro erro: mostra o aviso.
+        if (e.status === 401){ irParaLogin(); return; }
+        $('main').hidden = false;
+        mostrarErroConexao(e);
+      });
+    return;
+  }
+
+  // API local: confere a sessão. Sem login volta ao painel; com a senha
+  // provisória abre a troca obrigatória; senão carrega a lista atual.
   fetch(API + '/api/admin/sessao', {headers: cabecalhos()})
     .then(function(r){
       if (r.status === 401){ irParaLogin(); throw null; }

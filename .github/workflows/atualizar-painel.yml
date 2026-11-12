@@ -4,8 +4,9 @@
 # O que faz:
 #   1) Consulta o SAP Datasphere (api/gerar-dados.js) e gera o
 #      js/dados.js com as metas (dados/metas.json) + real + online.
-#   2) Publica SÓ o painel no GitHub Pages (link do time comercial).
-#      O admin (admin.html) e a API (pasta api) NÃO são publicados.
+#   2) Publica no GitHub Pages o painel (link do time comercial) e o
+#      admin online (login pela chave do GitHub, ver js/github.js).
+#      A pasta api (servidor local) e o metas.json NÃO vão para o site.
 #
 # Quando roda:
 #   - De hora em hora (o GitHub pode atrasar alguns minutos);
@@ -88,9 +89,9 @@ jobs:
       - name: Montar a pasta do site
         run: |
           mkdir -p _site/js
-          cp index.html _site/
+          cp index.html admin.html _site/
           cp -r css _site/
-          cp js/dados.js js/app.js js/visual.js js/login.js _site/js/
+          cp js/dados.js js/app.js js/visual.js js/login.js js/github.js js/admin.js _site/js/
 
       - name: Configurar o GitHub Pages
         uses: actions/configure-pages@v5
