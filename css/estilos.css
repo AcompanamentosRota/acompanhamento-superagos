@@ -1,0 +1,331 @@
+/* =====================================================================
+   Acompanhamento Super Agos - Estilos
+   Layout: cabeçalho vermelho fixo, painel de filtros, cards de resumo
+   e uma tabela com abas de categoria e alternância cliente/rede.
+   ===================================================================== */
+
+
+/* ---------- 1. Base ----------
+   Regras herdadas do arquivo original (vinham do <head> da linha 1).
+   Mantidas aqui no topo, na mesma ordem, para o visual ficar idêntico. */
+:root{
+  color-scheme:light;
+  box-sizing:border-box;
+  /* Respeita a área segura (notch) em celulares */
+  padding-top:env(safe-area-inset-top,0px);
+  padding-bottom:env(safe-area-inset-bottom,0px);
+}
+html{scroll-padding-top:env(safe-area-inset-top,0px);}
+body{margin:0;padding:0;font:14px -apple-system,BlinkMacSystemFont,sans-serif;background:#faf9f5;color:#141413;}
+img{max-width:100%;}
+[hidden]:not([hidden=until-found i]){display:none!important;}
+
+
+/* ---------- 2. Variáveis de cor (tema claro) ----------
+   Todas as cores do painel são definidas aqui. Para mudar a paleta,
+   basta alterar estes valores. */
+:root{
+  --paper:#faf6f2;          /* fundo da página */
+  --paper-raised:#ffffff;   /* fundo de cards, filtros e tabela */
+  --ink:#1d1512;            /* texto principal */
+  --ink-dim:#6b5f5a;        /* texto secundário */
+  --line:#e7ddd6;           /* bordas suaves */
+  --line-strong:#d8cac0;    /* bordas de campos e botões */
+  --red:#d90429;            /* cor da marca */
+  --red-deep:#9d0521;
+  --red-wash:#fdeceb;
+  --gold:#b9861f;           /* destaque do card "Meta" */
+  --gold-wash:#faf1de;
+  --good:#1c7a4d;           /* atingiu a meta (>= 100%) */
+  --good-wash:#e8f5ee;
+  --bad:#c22a2a;            /* abaixo da meta (< 100%) */
+  --bad-wash:#fbeaea;
+  --neutral-wash:#f1ede9;   /* fundo do cabeçalho da tabela e hover */
+  --focus:#0b6ecf;          /* contorno de campo em foco */
+  --network:#5b3fa8;        /* etiqueta de rede */
+  --network-wash:#f0ecfa;
+  --shadow: 0 1px 2px rgba(29,21,18,.06), 0 8px 24px -12px rgba(29,21,18,.18);
+}
+
+
+/* ---------- 3. Tema escuro ----------
+   Aplicado de duas formas:
+   a) automaticamente, se o sistema estiver em modo escuro
+      (a menos que a página force data-theme="light");
+   b) manualmente, com data-theme="dark" no <html>. */
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --paper:#161211; --paper-raised:#1f1917; --ink:#f3ebe6; --ink-dim:#b8a89f;
+    --line:#332924; --line-strong:#453832;
+    --red:#ff4d63; --red-deep:#ff7f8f; --red-wash:#3a1218;
+    --gold:#e0b054; --gold-wash:#332a15;
+    --good:#4fcf8e; --good-wash:#123324;
+    --bad:#ff6b6b; --bad-wash:#3a1414;
+    --neutral-wash:#241d1a; --focus:#6cb3ff;
+    --network:#b9a2ec; --network-wash:#2a2140;
+    --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"]{
+  --paper:#161211; --paper-raised:#1f1917; --ink:#f3ebe6; --ink-dim:#b8a89f;
+  --line:#332924; --line-strong:#453832;
+  --red:#ff4d63; --red-deep:#ff7f8f; --red-wash:#3a1218;
+  --gold:#e0b054; --gold-wash:#332a15;
+  --good:#4fcf8e; --good-wash:#123324;
+  --bad:#ff6b6b; --bad-wash:#3a1414;
+  --neutral-wash:#241d1a; --focus:#6cb3ff;
+  --network:#b9a2ec; --network-wash:#2a2140;
+  --shadow: 0 1px 2px rgba(0,0,0,.4), 0 8px 24px -12px rgba(0,0,0,.6);
+  color-scheme: dark;
+}
+
+
+/* ---------- 4. Reset e elementos gerais ---------- */
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0;background:var(--paper);color:var(--ink);
+  font-family:'Archivo',ui-sans-serif,system-ui,sans-serif;
+  font-variant-numeric:tabular-nums; /* números com largura fixa, alinham melhor em colunas */
+}
+a{color:inherit;}
+input,select,button{font-family:inherit;color:inherit;}
+[hidden]{display:none !important;}
+
+
+/* ---------- 5. Cabeçalho (barra vermelha fixa) ---------- */
+header.topbar{
+  position:sticky;top:env(safe-area-inset-top,0px);z-index:20; /* fica preso no topo ao rolar */
+  background:linear-gradient(180deg,var(--red) 0%,var(--red-deep) 100%);
+  color:#fff;border-bottom:3px solid var(--ink);
+}
+.topbar-inner{max-width:1320px;margin:0 auto;padding:16px 20px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.brand-mark{
+  font-family:'Archivo Black',sans-serif;font-size:1rem;letter-spacing:.02em;
+  background:#fff;color:var(--red-deep);padding:3px 8px;border-radius:4px;text-transform:uppercase;flex-shrink:0;
+}
+/* Logos: Coca-Cola Bandeirantes dentro de um "chip" branco + logo SuperAgos 26 */
+.brand-logos{display:flex;align-items:center;gap:8px;flex-shrink:0;}
+.logo-chip{background:#fff;border-radius:6px;padding:3px 6px;display:flex;align-items:center;height:36px;}
+.logo-band{height:30px;width:auto;display:block;}
+.logo-agos{height:36px;width:auto;display:block;border-radius:6px;border:1px solid rgba(255,255,255,.35);}
+/* Logos menores no celular */
+@media (max-width:640px){.logo-chip{height:30px}.logo-band{height:24px}.logo-agos{height:30px}}
+.brand-text{min-width:0;}
+.brand-name{font-family:'Archivo Black',sans-serif;font-size:1.05rem;color:#fff;white-space:nowrap;}
+.brand-sub{font-size:.72rem;opacity:.85;letter-spacing:.03em;text-transform:uppercase;color:#fff;}
+/* Selos de mês (Meta / Real / atualizado até), alinhados à direita */
+.month-badges{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap;}
+.month-badge{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.28);border-radius:99px;padding:6px 13px;font-size:.74rem;font-weight:700;color:#fff;white-space:nowrap;}
+.month-badge b{font-weight:800;}
+.month-badge.asof{background:rgba(255,255,255,.06);border-style:dashed;font-weight:600;}
+
+
+/* ---------- 6. Área principal ---------- */
+main{max-width:1320px;margin:0 auto;padding:20px 20px 70px;}
+
+
+/* ---------- 7. Painel de filtros ---------- */
+.filter-panel{background:var(--paper-raised);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:16px 18px;margin-bottom:16px;}
+.filter-row{display:flex;gap:12px;flex-wrap:wrap;align-items:flex-end;}
+.field{display:flex;flex-direction:column;gap:5px;min-width:150px;flex:1 1 150px;}
+.field label{font-size:.68rem;text-transform:uppercase;letter-spacing:.04em;color:var(--ink-dim);font-weight:700;}
+.field select,.field input{padding:8px 10px;border-radius:8px;border:1px solid var(--line-strong);background:var(--paper);color:var(--ink);font-size:.85rem;}
+.field select:focus,.field input:focus{outline:2px solid var(--focus);outline-offset:1px;}
+.field.search{flex:2 1 220px;} /* campo de busca ocupa o dobro de espaço */
+.reset-btn{appearance:none;border:1px solid var(--line-strong);background:var(--paper);color:var(--ink-dim);padding:8px 14px;border-radius:8px;font-size:.8rem;font-weight:600;cursor:pointer;white-space:nowrap;}
+.reset-btn:hover{border-color:var(--ink-dim);color:var(--ink);}
+
+
+/* ---------- 7.1 Cards de regras vinculadas às metas ----------
+   Cards dourados com ícone "!" explicando a consequência de não bater a meta. */
+.rules-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:12px;margin-bottom:16px;}
+.rule-card{display:flex;gap:12px;align-items:flex-start;background:var(--gold-wash);border:1px solid var(--line);border-left:5px solid var(--gold);border-radius:12px;padding:14px 16px;box-shadow:var(--shadow);}
+.rule-icon{flex-shrink:0;width:28px;height:28px;border-radius:50%;background:var(--gold);color:var(--paper-raised);display:flex;align-items:center;justify-content:center;font-family:'Archivo Black',sans-serif;font-size:.95rem;}
+.rule-cat{display:inline-block;font-size:.66rem;font-weight:800;text-transform:uppercase;letter-spacing:.05em;color:var(--red);margin-bottom:3px;} /* nome da categoria */
+.rule-title{font-weight:700;font-size:.92rem;margin-bottom:3px;}  /* nome do benefício */
+.rule-text{font-size:.82rem;color:var(--ink-dim);line-height:1.45;} /* descrição da regra */
+.rule-text b{color:var(--ink);}
+
+
+/* ---------- 8. Abas de categoria e alternância cliente/rede ---------- */
+.tabs-row{display:flex;justify-content:space-between;align-items:center;gap:14px;flex-wrap:wrap;margin-bottom:14px;}
+.cat-tabs{display:flex;gap:6px;flex-wrap:wrap;}
+.cat-tab{appearance:none;border:1px solid var(--line-strong);background:var(--paper-raised);color:var(--ink-dim);padding:8px 15px;border-radius:99px;font-size:.82rem;font-weight:700;cursor:pointer;}
+.cat-tab.active{background:var(--red);border-color:var(--red);color:#fff;} /* aba selecionada */
+.level-toggle{display:flex;border:1px solid var(--line-strong);border-radius:99px;overflow:hidden;}
+.level-btn{appearance:none;border:none;background:var(--paper-raised);color:var(--ink-dim);padding:8px 16px;font-size:.8rem;font-weight:700;cursor:pointer;}
+.level-btn.active{background:var(--ink);color:var(--paper);} /* visão selecionada */
+
+
+/* ---------- 9. Cards de resumo ---------- */
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:12px;margin-bottom:18px;}
+.summary-card{background:var(--paper-raised);border:1px solid var(--line);border-radius:12px;padding:16px 18px;box-shadow:var(--shadow);}
+.summary-label{font-size:.72rem;color:var(--ink-dim);text-transform:uppercase;letter-spacing:.03em;font-weight:700;margin-bottom:8px;}
+.summary-value{font-family:'IBM Plex Mono',monospace;font-size:1.5rem;font-weight:700;}
+.summary-value.good{color:var(--good);}
+.summary-value.bad{color:var(--bad);}
+.summary-card.total .summary-value{color:var(--gold);} /* card "Meta" em dourado */
+
+
+/* ---------- 10. Tabela ---------- */
+.table-wrap{background:var(--paper-raised);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);overflow:hidden;}
+.table-scroll{overflow-x:auto;} /* rolagem horizontal em telas estreitas */
+table.track{border-collapse:collapse;width:100%;font-size:.83rem;min-width:720px;}
+/* Números alinhados à direita... */
+table.track th,table.track td{padding:10px 12px;text-align:right;border-bottom:1px solid var(--line);white-space:nowrap;}
+/* ...exceto as duas primeiras colunas (nome e rede/gerência), à esquerda */
+table.track th:first-child,table.track td:first-child,
+table.track th:nth-child(2),table.track td:nth-child(2){text-align:left;}
+table.track thead th{background:var(--neutral-wash);font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:.03em;color:var(--ink-dim);position:sticky;top:0;cursor:pointer;user-select:none;}
+/* Para as 8 colunas caberem na tela: o título pode quebrar em duas linhas
+   (ex.: "ONLINE / REFRIGERANTES"), com padding menor.
+   Todos os títulos ficam centralizados na horizontal e na vertical
+   (o seletor com :nth-child vence a regra que alinha as 2 primeiras colunas à esquerda). */
+table.track thead th,
+table.track thead th:first-child,
+table.track thead th:nth-child(2){white-space:normal;text-align:center;vertical-align:middle;line-height:1.3;padding:10px 8px;}
+/* Colunas numéricas: largura mínima suficiente para "2.112.750,0" */
+table.track thead th:nth-child(n+4){min-width:86px;}
+/* Nome do cliente/rede e gerência/supervisão podem quebrar linha em vez de alargar a tabela */
+table.track td.name-cell{white-space:normal;}
+table.track td:first-child{min-width:170px;max-width:240px;}
+table.track td{padding:10px 8px;}
+/* Da 3ª coluna em diante (Gerência/Supervisão ou Lojas, Meta, Real, Online,
+   diferença e %), os valores ficam centralizados, alinhados com os títulos.
+   Cliente/Rede (1ª e 2ª colunas) continuam à esquerda. */
+table.track td:nth-child(n+3){text-align:center;}
+table.track thead th:hover{color:var(--ink);}
+table.track tbody tr:hover{background:var(--neutral-wash);}
+/* Linha de cliente/rede abaixo de 100% da meta: fundo avermelhado */
+table.track tbody tr.below{background:var(--bad-wash);}
+table.track tbody tr.below:hover{background:var(--bad-wash);filter:brightness(.97);}
+table.track td{font-family:'IBM Plex Mono',monospace;}
+table.track td.name-cell{font-family:'Archivo',sans-serif;}
+.cname{font-weight:600;}                                                          /* nome do cliente/rede */
+.ccode{color:var(--ink-dim);font-size:.76rem;}                                    /* código abaixo do nome */
+.cmeta-line{font-size:.74rem;color:var(--ink-dim);font-family:'Archivo',sans-serif;} /* gerência/supervisão */
+/* Pílula do % de atingimento: verde (>=100%), vermelha (<100%) ou cinza (sem meta) */
+.pct-pill{display:inline-flex;align-items:center;gap:4px;font-weight:700;padding:3px 9px;border-radius:99px;font-size:.78rem;}
+.pct-pill.good{background:var(--good-wash);color:var(--good);}
+.pct-pill.bad{background:var(--bad-wash);color:var(--bad);}
+.pct-pill.na{background:var(--neutral-wash);color:var(--ink-dim);}
+/* Coluna "Real − Meta": vermelho quando falta volume, verde quando superou */
+.diff-neg{color:var(--bad);font-weight:700;}
+.diff-pos{color:var(--good);font-weight:700;}
+/* Etiqueta roxa com nome e código da rede */
+.tag{display:inline-block;font-size:.68rem;background:var(--network-wash);color:var(--network);border:1px solid var(--line);padding:2px 8px;border-radius:99px;margin-top:2px;}
+.empty-state{padding:48px 20px;text-align:center;color:var(--ink-dim);font-size:.9rem;}
+.results-count{font-size:.78rem;color:var(--ink-dim);padding:12px 18px;border-top:1px solid var(--line);}
+
+
+/* ---------- 11. Rodapé ---------- */
+footer.foot{max-width:1320px;margin:0 auto;padding:24px 20px 50px;color:var(--ink-dim);font-size:.74rem;line-height:1.6;}
+
+
+/* ---------- 12. Responsivo (celular) ---------- */
+@media (max-width:640px){
+  table.track{min-width:720px;} /* 8 colunas (com Online): rolagem horizontal no celular */
+}
+
+
+/* ---------- 13. Tela de admin (admin.html) ----------
+   Usa as mesmas variáveis de cor do painel (funciona no tema claro e escuro). */
+.admin-section{background:var(--paper-raised);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:18px 20px;margin-bottom:16px;}
+.admin-h2{display:flex;align-items:center;gap:10px;font-family:'Archivo Black',sans-serif;font-size:1rem;margin:0 0 10px;}
+/* Número da etapa (1, 2, 3, 4) */
+.admin-step{width:26px;height:26px;border-radius:50%;background:var(--red);color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:.85rem;flex-shrink:0;}
+.admin-text{font-size:.86rem;color:var(--ink-dim);margin:0 0 12px;line-height:1.5;}
+.admin-text b{color:var(--ink);}
+.admin-file{flex:2 1 280px;}
+.admin-file input{padding:6px;}
+/* Botão principal (Salvar) */
+.admin-btn{appearance:none;border:0;background:var(--red);color:#fff;padding:11px 20px;border-radius:10px;font-size:.88rem;font-weight:700;cursor:pointer;}
+.admin-btn:hover{background:var(--red-deep);}
+.admin-btn:disabled{opacity:.45;cursor:not-allowed;}
+/* Mensagens: ok (verde), aviso (dourado), erro (vermelho) */
+.admin-msg{border-radius:10px;padding:12px 14px;margin:12px 0;font-size:.84rem;line-height:1.55;border:1px solid var(--line);}
+.admin-msg.ok{background:var(--good-wash);color:var(--good);}
+.admin-msg.aviso{background:var(--gold-wash);color:var(--gold);}
+.admin-msg.erro{background:var(--bad-wash);color:var(--bad);}
+.admin-msg ul{margin:6px 0 0;padding-left:20px;}
+.admin-msg a{color:inherit;font-weight:700;}
+.admin-msg code{background:var(--paper);color:var(--ink);padding:1px 6px;border-radius:5px;}
+/* Tabela de totais por categoria e lista de PVs */
+.admin-totais{margin-bottom:14px;}
+.admin-filtro-lista{margin-bottom:10px;}
+.admin-lista{max-height:460px;overflow-y:auto;} /* rolagem com cabeçalho fixo */
+/* No painel, a 2ª coluna (Rede) é alinhada à esquerda. Nas tabelas do admin
+   a 2ª coluna é "Meta atual" / "Situação": centraliza como as demais,
+   alinhada com o título. Só a 1ª coluna (Categoria / PV) fica à esquerda. */
+.admin-section table.track td:nth-child(n+2){text-align:center;}
+/* Etiqueta da situação do PV */
+.admin-tag{display:inline-block;font-size:.7rem;font-weight:700;padding:2px 9px;border-radius:99px;font-family:'Archivo',sans-serif;}
+.admin-tag.novo{background:var(--good-wash);color:var(--good);}
+.admin-tag.alterado{background:var(--gold-wash);color:var(--gold);}
+.admin-tag.igual{background:var(--neutral-wash);color:var(--ink-dim);}
+.admin-tag.sai{background:var(--bad-wash);color:var(--bad);}
+/* Valor anterior da meta, abaixo do novo, quando mudou */
+.admin-antes{font-size:.7rem;color:var(--ink-dim);}
+/* Link "Abrir painel" no cabeçalho */
+a.month-badge{text-decoration:none;}
+
+
+/* ---------- 14. Modal de login do admin (index.html) ---------- */
+/* Fundo escuro cobrindo a tela, com a caixa centralizada */
+.modal-fundo{position:fixed;inset:0;background:rgba(0,0,0,.55);display:flex;align-items:center;justify-content:center;padding:16px;z-index:100;}
+.modal{background:var(--paper-raised);color:var(--ink);border:1px solid var(--line);border-radius:14px;box-shadow:0 20px 60px -20px rgba(0,0,0,.6);width:100%;max-width:380px;padding:20px 22px;display:flex;flex-direction:column;gap:12px;}
+.modal-topo{display:flex;align-items:center;justify-content:space-between;}
+.modal-titulo{font-family:'Archivo Black',sans-serif;font-size:1.05rem;margin:0;}
+.modal-fechar{appearance:none;border:0;background:none;color:var(--ink-dim);font-size:1.5rem;line-height:1;cursor:pointer;padding:0 4px;}
+.modal-fechar:hover{color:var(--ink);}
+.modal-texto{font-size:.82rem;color:var(--ink-dim);margin:0;}
+.modal .field{min-width:0;flex:none;}
+.modal-erro{background:var(--bad-wash);color:var(--bad);border-radius:8px;padding:8px 10px;font-size:.8rem;}
+.modal-botoes{display:flex;justify-content:flex-end;gap:8px;margin-top:4px;}
+/* Selos do cabeçalho usados como botão (Admin / Sair) */
+button.month-badge{font-family:inherit;cursor:pointer;}
+a.month-badge:hover,button.month-badge:hover{background:rgba(255,255,255,.24);}
+
+
+/* ---------- 15. Admin: usuários ---------- */
+/* Título da seção com o botão "+ Novo usuário" à direita */
+.admin-titulo-linha{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:6px;}
+.admin-titulo-linha .admin-h2{margin:0;}
+/* Botões pequenos de cada linha (Resetar senha / Excluir) */
+.admin-acao{padding:5px 10px;font-size:.74rem;}
+.admin-acao.perigo:hover{border-color:var(--bad);color:var(--bad);}
+/* Senha provisória em destaque, fácil de ler e copiar */
+.admin-senha-provisoria{font-family:'IBM Plex Mono',monospace;font-size:1.6rem;font-weight:600;letter-spacing:.08em;text-align:center;padding:14px;border:2px dashed var(--line-strong);border-radius:10px;background:var(--neutral-wash);user-select:all;}
+
+/* Cabeçalho do admin: lado direito em duas linhas, alinhadas à direita
+   (perfil/Alterar senha/Sair no canto superior direito) */
+.topbar-direita{margin-left:auto;display:flex;flex-direction:column;align-items:flex-end;gap:6px;}
+.topbar-direita .month-badges{margin-left:0;justify-content:flex-end;}
+
+
+/* ---------- 16. Troca de visual (Clássico | Executivo) ----------
+   Aparência do seletor no visual Clássico (no Executivo, ver executivo.css).
+   A barra de progresso do % só existe no Executivo: aqui fica escondida. */
+.visual-toggle{display:inline-flex;border:1px solid rgba(255,255,255,.28);border-radius:99px;overflow:hidden;}
+.visual-toggle button{appearance:none;border:0;background:transparent;color:#fff;font:inherit;font-size:.74rem;font-weight:700;padding:6px 12px;cursor:pointer;}
+.visual-toggle button.active{background:rgba(255,255,255,.24);}
+.pct-cell{display:inline-flex;align-items:center;gap:8px;}
+.pct-bar{display:none;}
+
+
+/* ---------- 17. Cabeçalho do Clássico em uma única linha ----------
+   Com o seletor Clássico | Executivo, os selos passaram a quebrar para uma
+   2ª linha, deixando um vazio à esquerda. Em telas largas fica tudo na
+   mesma linha, com selos um pouco mais compactos; se faltar espaço, o
+   subtítulo encolhe e termina em "…". Abaixo de 1280px volta a quebrar
+   normalmente. (O Executivo tem regra própria em executivo.css.) */
+@media (min-width:1280px){
+  .topbar-inner{flex-wrap:nowrap;gap:14px;}
+  .month-badges{flex-wrap:nowrap;gap:6px;flex-shrink:0;}
+  .month-badge{padding:6px 11px;}
+  .visual-toggle button{padding:6px 10px;}
+  .brand-text{flex:1 1 auto;min-width:0;}
+  .brand-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+}

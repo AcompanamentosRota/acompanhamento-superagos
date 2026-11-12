@@ -1,0 +1,5 @@
+node_modules/
+.env
+# Usuários do admin (hash das senhas): não vai para o repositório
+usuarios.json
+usuarios.json.tmp

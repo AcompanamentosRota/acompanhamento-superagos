@@ -1,0 +1,404 @@
+/* =====================================================================
+   Acompanhamento Super Agos - Visual EXECUTIVO
+   ---------------------------------------------------------------------
+   Carregado depois do estilos.css. TODAS as regras começam com
+   html[data-visual="executivo"], então só valem quando esse visual está
+   ativo (ver js/visual.js). O visual Clássico não é afetado.
+
+   Direção: estilo de relatório financeiro.
+     - cabeçalho claro com um filete vermelho, sem degradê;
+     - títulos e números de destaque em serifada (Newsreader);
+     - textos e tabela em IBM Plex Sans com números alinhados;
+     - cantos retos, divisórias finas no lugar de sombras e "pílulas";
+     - o vermelho da marca só como detalhe; cor forte só nos números.
+   ===================================================================== */
+
+
+/* ---------- 1. Paleta (tema claro) ----------
+   Redefine as mesmas variáveis do estilos.css: tudo que usa var(--...)
+   já muda de cor automaticamente. */
+html[data-visual="executivo"]{
+  --paper:#f5f3ee;          /* fundo da página: papel quente */
+  --paper-raised:#ffffff;   /* superfícies */
+  --ink:#17140f;            /* texto principal */
+  --ink-dim:#6f685e;        /* texto secundário */
+  --line:#e3ded4;           /* divisórias finas */
+  --line-strong:#cbc4b7;    /* bordas de campos */
+  --red:#c8102e;            /* vermelho da marca (só detalhes) */
+  --red-deep:#8f0c22;
+  --red-wash:#f8e9e9;
+  --gold:#8a6a2b;           /* bronze discreto */
+  --gold-wash:#f4eedf;
+  --good:#2e6b4c;           /* verde sóbrio */
+  --good-wash:#e7f0ea;
+  --bad:#b3261e;            /* vermelho sóbrio */
+  --bad-wash:#f7e8e6;
+  --neutral-wash:#f0ede7;
+  --focus:#17140f;
+  --network:#3f4a7a;        /* azul ardósia para redes */
+  --network-wash:#eceef5;
+  --shadow:none;
+  --serif:'Newsreader',Georgia,'Times New Roman',serif;
+  --sans:'IBM Plex Sans',ui-sans-serif,system-ui,sans-serif;
+}
+
+/* ---------- 2. Paleta (tema escuro) ----------
+   Mesmo critério do estilos.css: segue o sistema, a menos que a página
+   force data-theme="light"; ou é forçado com data-theme="dark". */
+@media (prefers-color-scheme: dark){
+  html[data-visual="executivo"]:not([data-theme="light"]){
+    --paper:#131210; --paper-raised:#1a1916; --ink:#ece8e0; --ink-dim:#9d968a;
+    --line:#2b2924; --line-strong:#3b3832;
+    --red:#e5484d; --red-deep:#ff8a8f; --red-wash:#341619;
+    --gold:#c9a35b; --gold-wash:#2c2516;
+    --good:#74c69d; --good-wash:#16271e;
+    --bad:#f0776d; --bad-wash:#33191a;
+    --neutral-wash:#201e1a; --focus:#ece8e0;
+    --network:#a9b4e6; --network-wash:#1f2233;
+  }
+}
+html[data-visual="executivo"][data-theme="dark"]{
+  --paper:#131210; --paper-raised:#1a1916; --ink:#ece8e0; --ink-dim:#9d968a;
+  --line:#2b2924; --line-strong:#3b3832;
+  --red:#e5484d; --red-deep:#ff8a8f; --red-wash:#341619;
+  --gold:#c9a35b; --gold-wash:#2c2516;
+  --good:#74c69d; --good-wash:#16271e;
+  --bad:#f0776d; --bad-wash:#33191a;
+  --neutral-wash:#201e1a; --focus:#ece8e0;
+  --network:#a9b4e6; --network-wash:#1f2233;
+}
+
+
+/* ---------- 3. Base ---------- */
+html[data-visual="executivo"] body{
+  font-family:var(--sans);
+  font-size:14px;
+  -webkit-font-smoothing:antialiased;
+  font-variant-numeric:tabular-nums lining-nums;
+}
+
+
+/* ---------- 4. Cabeçalho ----------
+   Superfície clara, filete vermelho no topo e divisória fina embaixo. */
+html[data-visual="executivo"] header.topbar{
+  background:var(--paper-raised);
+  color:var(--ink);
+  border-bottom:1px solid var(--line);
+  border-top:3px solid var(--red);
+}
+html[data-visual="executivo"] .topbar-inner{padding:14px 24px;}
+html[data-visual="executivo"] .logo-chip{border:1px solid var(--line);border-radius:3px;}
+html[data-visual="executivo"] .logo-agos{border:0;border-radius:3px;}
+html[data-visual="executivo"] .brand-name{
+  font-family:var(--serif);font-size:1.4rem;font-weight:600;
+  color:var(--ink);letter-spacing:-.01em;
+}
+html[data-visual="executivo"] .brand-sub{
+  color:var(--ink-dim);opacity:1;text-transform:none;letter-spacing:0;font-size:.8rem;
+}
+/* Selos viram texto simples separado por divisórias verticais */
+html[data-visual="executivo"] .month-badges{gap:0;align-items:center;}
+html[data-visual="executivo"] .month-badge{
+  background:none;border:0;border-left:1px solid var(--line);border-radius:0;
+  color:var(--ink-dim);font-weight:500;font-size:.8rem;padding:4px 14px;
+}
+html[data-visual="executivo"] .month-badge:first-child{border-left:0;}
+html[data-visual="executivo"] .month-badge b{color:var(--ink);font-weight:600;}
+html[data-visual="executivo"] .month-badge.asof{background:none;border-style:solid;font-weight:500;}
+/* Selos clicáveis (Admin, Abrir painel, Alterar senha, Sair): link discreto */
+html[data-visual="executivo"] a.month-badge,
+html[data-visual="executivo"] button.month-badge{color:var(--ink);font-weight:600;text-decoration:none;}
+html[data-visual="executivo"] a.month-badge:hover,
+html[data-visual="executivo"] button.month-badge:hover{background:none;color:var(--red);}
+/* Botão "Admin": contorno fino, como um botão de relatório */
+html[data-visual="executivo"] #btnAdmin{
+  border:1px solid var(--ink);border-radius:3px;margin-left:10px;padding:5px 14px;
+}
+html[data-visual="executivo"] #btnAdmin:hover{background:var(--ink);color:var(--paper-raised);}
+/* Seletor Clássico | Executivo */
+html[data-visual="executivo"] .visual-toggle{
+  border:1px solid var(--line-strong);border-radius:3px;margin-left:14px;
+}
+html[data-visual="executivo"] .visual-toggle button{
+  color:var(--ink-dim);font-weight:500;font-size:.76rem;padding:5px 11px;
+}
+html[data-visual="executivo"] .visual-toggle button.active{background:var(--ink);color:var(--paper-raised);}
+/* Admin: as duas linhas do lado direito com o mesmo estilo */
+html[data-visual="executivo"] .topbar-direita{gap:4px;}
+
+
+/* ---------- 5. Área principal ---------- */
+html[data-visual="executivo"] main{padding:28px 24px 80px;}
+
+
+/* ---------- 6. Regras das metas: notas discretas ---------- */
+html[data-visual="executivo"] .rules-grid{gap:16px;margin-bottom:28px;}
+html[data-visual="executivo"] .rule-card{
+  background:var(--paper-raised);border:1px solid var(--line);border-left:3px solid var(--red);
+  border-radius:0;box-shadow:none;padding:14px 18px;
+}
+html[data-visual="executivo"] .rule-icon{display:none;}
+html[data-visual="executivo"] .rule-cat{
+  color:var(--red);font-weight:600;font-size:.7rem;letter-spacing:.08em;
+}
+html[data-visual="executivo"] .rule-title{font-family:var(--serif);font-size:1.12rem;font-weight:600;margin:2px 0 4px;}
+html[data-visual="executivo"] .rule-text{font-size:.84rem;}
+
+
+/* ---------- 7. Abas de categoria e Por cliente / Por rede ----------
+   Abas de texto sobre uma linha; a selecionada ganha um sublinhado. */
+html[data-visual="executivo"] .tabs-row{
+  border-bottom:1px solid var(--line);margin-bottom:0;align-items:flex-end;
+}
+html[data-visual="executivo"] .cat-tabs{gap:0;}
+html[data-visual="executivo"] .cat-tab{
+  background:none;border:0;border-radius:0;color:var(--ink-dim);
+  font-weight:500;font-size:.9rem;padding:12px 16px;margin-bottom:-1px;
+  border-bottom:2px solid transparent;
+}
+html[data-visual="executivo"] .cat-tab:hover{color:var(--ink);}
+html[data-visual="executivo"] .cat-tab.active{
+  background:none;color:var(--ink);font-weight:600;border-bottom-color:var(--red);
+}
+html[data-visual="executivo"] .level-toggle{border-radius:3px;border-color:var(--line-strong);margin-bottom:8px;}
+html[data-visual="executivo"] .level-btn{font-weight:500;padding:7px 14px;}
+html[data-visual="executivo"] .level-btn.active{background:var(--ink);color:var(--paper-raised);}
+
+
+/* ---------- 8. Indicadores (cards de resumo) ----------
+   Uma faixa única: linha forte em cima, divisórias verticais entre os
+   números, sem sombras. Números grandes em serifada. */
+html[data-visual="executivo"] .summary-grid{
+  gap:0;margin:0 0 28px;background:var(--paper-raised);
+  border-bottom:1px solid var(--line);
+}
+html[data-visual="executivo"] .summary-card{
+  background:none;border:0;border-left:1px solid var(--line);border-radius:0;
+  box-shadow:none;padding:20px 22px 22px;
+}
+html[data-visual="executivo"] .summary-card:first-child{border-left:0;}
+html[data-visual="executivo"] .summary-label{
+  text-transform:none;letter-spacing:0;font-weight:500;font-size:.8rem;margin-bottom:10px;
+}
+html[data-visual="executivo"] .summary-value{
+  /* Tamanho acompanha a largura da tela, para "-1.770.919,2" caber no card */
+  font-family:var(--serif);font-weight:500;font-size:clamp(1.5rem,2.3vw,1.9rem);line-height:1.05;
+  letter-spacing:-.02em;font-variant-numeric:lining-nums tabular-nums;
+}
+html[data-visual="executivo"] .summary-card.total .summary-value{color:var(--ink);}
+
+
+/* ---------- 9. Filtros: barra simples, sem caixa ---------- */
+html[data-visual="executivo"] .filter-panel{
+  background:none;border:0;border-radius:0;box-shadow:none;padding:0;margin-bottom:18px;
+}
+html[data-visual="executivo"] .field label{
+  text-transform:none;letter-spacing:0;font-weight:500;font-size:.78rem;
+}
+html[data-visual="executivo"] .field select,
+html[data-visual="executivo"] .field input{
+  border-radius:3px;background:var(--paper-raised);font-size:.86rem;padding:8px 10px;
+}
+html[data-visual="executivo"] .field select:focus,
+html[data-visual="executivo"] .field input:focus{outline:1px solid var(--ink);outline-offset:0;border-color:var(--ink);}
+html[data-visual="executivo"] .reset-btn{
+  border-radius:3px;background:none;color:var(--ink);font-weight:500;
+}
+html[data-visual="executivo"] .reset-btn:hover{border-color:var(--ink);}
+
+
+/* ---------- 10. Tabela ----------
+   Linha forte no topo, divisórias finas, sem fundo vermelho nas linhas:
+   quem está abaixo da meta ganha só uma marca fina à esquerda. */
+html[data-visual="executivo"] .table-wrap{
+  border:0;border-top:2px solid var(--ink);border-radius:0;box-shadow:none;
+  background:var(--paper-raised);
+}
+html[data-visual="executivo"] table.track{font-size:.86rem;}
+html[data-visual="executivo"] table.track thead th{
+  background:var(--paper-raised);color:var(--ink-dim);
+  text-transform:none;letter-spacing:0;font-weight:500;font-size:.76rem;
+  border-bottom:1px solid var(--line-strong);padding:12px 10px;
+}
+html[data-visual="executivo"] table.track thead th:hover{color:var(--ink);}
+html[data-visual="executivo"] table.track td{
+  font-family:var(--sans);padding:12px 10px;border-bottom-color:var(--line);
+}
+html[data-visual="executivo"] table.track td.name-cell{font-family:var(--sans);}
+html[data-visual="executivo"] table.track tbody tr:hover{background:var(--neutral-wash);}
+html[data-visual="executivo"] table.track tbody tr.below,
+html[data-visual="executivo"] table.track tbody tr.below:hover{filter:none;}
+html[data-visual="executivo"] table.track tbody tr.below{background:none;}
+html[data-visual="executivo"] table.track tbody tr.below:hover{background:var(--neutral-wash);}
+html[data-visual="executivo"] table.track tbody tr.below td:first-child{box-shadow:inset 3px 0 0 var(--bad);}
+html[data-visual="executivo"] .cname{font-weight:600;}
+html[data-visual="executivo"] .ccode,
+html[data-visual="executivo"] .cmeta-line{font-family:var(--sans);font-size:.76rem;}
+/* Rede: texto em azul ardósia com contorno fino, sem "pílula" colorida */
+html[data-visual="executivo"] .tag{
+  background:none;border:1px solid var(--line-strong);border-radius:2px;
+  color:var(--network);font-size:.72rem;padding:1px 7px;
+}
+/* Diferença: cor só no número */
+html[data-visual="executivo"] .diff-neg,
+html[data-visual="executivo"] .diff-pos{font-weight:600;}
+/* % de atingimento: barra fina + número (sem pílula) */
+html[data-visual="executivo"] .pct-cell{gap:10px;min-width:118px;justify-content:flex-end;}
+html[data-visual="executivo"] .pct-bar{
+  display:inline-block;position:relative;width:56px;height:4px;
+  background:var(--line);overflow:hidden;
+}
+html[data-visual="executivo"] .pct-bar i{position:absolute;left:0;top:0;bottom:0;}
+html[data-visual="executivo"] .pct-bar.good i{background:var(--good);}
+html[data-visual="executivo"] .pct-bar.bad i{background:var(--bad);}
+html[data-visual="executivo"] .pct-pill{
+  background:none;padding:0;border-radius:0;font-size:.86rem;font-weight:600;
+  min-width:48px;justify-content:flex-end;
+}
+html[data-visual="executivo"] .pct-pill.na{color:var(--ink-dim);font-weight:500;font-size:.78rem;}
+html[data-visual="executivo"] .results-count{padding:14px 10px;font-size:.8rem;}
+html[data-visual="executivo"] .empty-state{font-family:var(--serif);font-size:1.05rem;}
+
+
+/* ---------- 11. Rodapé ---------- */
+html[data-visual="executivo"] footer.foot{padding:28px 24px 56px;font-size:.78rem;}
+
+
+/* ---------- 12. Tela de admin ---------- */
+html[data-visual="executivo"] .admin-section{
+  border:0;border-top:2px solid var(--ink);border-radius:0;box-shadow:none;
+  padding:22px 24px;margin-bottom:24px;
+}
+html[data-visual="executivo"] .admin-h2{font-family:var(--serif);font-weight:600;font-size:1.3rem;gap:12px;}
+/* Número da etapa: algarismo vermelho, sem círculo */
+html[data-visual="executivo"] .admin-step{
+  width:auto;height:auto;background:none;border-radius:0;color:var(--red);
+  font-family:var(--serif);font-size:1.3rem;font-weight:500;
+}
+html[data-visual="executivo"] .admin-text{font-size:.88rem;}
+html[data-visual="executivo"] .admin-btn{
+  border-radius:3px;background:var(--ink);color:var(--paper-raised);font-weight:600;
+}
+html[data-visual="executivo"] .admin-btn:hover{background:var(--red);color:#fff;}
+html[data-visual="executivo"] .admin-msg{border-radius:0;border:0;border-left:3px solid currentColor;}
+html[data-visual="executivo"] .admin-tag{
+  font-family:var(--sans);border-radius:2px;font-weight:600;background:none;
+  border:1px solid currentColor;padding:1px 7px;
+}
+html[data-visual="executivo"] .admin-section .table-wrap{border-top-width:1px;border-top-color:var(--line-strong);}
+html[data-visual="executivo"] .admin-senha-provisoria{
+  border-radius:3px;font-family:var(--sans);letter-spacing:.12em;
+}
+
+
+/* ---------- 13. Modais (login, senha, usuários) ---------- */
+html[data-visual="executivo"] .modal{
+  border-radius:4px;border-top:3px solid var(--red);
+  box-shadow:0 24px 64px -24px rgba(0,0,0,.45);padding:24px 26px;
+}
+html[data-visual="executivo"] .modal-titulo{font-family:var(--serif);font-weight:600;font-size:1.35rem;}
+html[data-visual="executivo"] .modal-erro{border-radius:0;border-left:3px solid var(--bad);}
+
+
+/* ---------- 14. Celular ---------- */
+@media (max-width:640px){
+  html[data-visual="executivo"] .topbar-inner{padding:12px 16px;}
+  html[data-visual="executivo"] main{padding:20px 16px 60px;}
+  html[data-visual="executivo"] .summary-value{font-size:1.6rem;}
+  /* Selos em várias linhas: tira as divisórias para não sobrar traço solto */
+  html[data-visual="executivo"] .month-badge{border-left:0;padding:4px 10px 4px 0;}
+  html[data-visual="executivo"] .visual-toggle{margin-left:0;}
+}
+
+
+/* =====================================================================
+   AJUSTES (revisão 1): logos, informações do topo e indicadores
+   Ficam no fim do arquivo para sobrescrever as regras anteriores.
+   ===================================================================== */
+
+/* ---------- Logos: mesma altura, cantos iguais e divisória antes do título ---------- */
+html[data-visual="executivo"] .brand-logos{gap:12px;}
+html[data-visual="executivo"] .logo-chip{
+  height:42px;padding:4px 10px;border:0;border-radius:4px;background:#fff;
+}
+html[data-visual="executivo"] .logo-band{height:32px;}
+html[data-visual="executivo"] .logo-agos{height:42px;border-radius:4px;}
+html[data-visual="executivo"] .brand-text{
+  border-left:1px solid var(--line-strong);padding-left:18px;margin-left:6px;
+}
+
+/* ---------- Informações do topo (Meta / Real / Atualizado) ----------
+   Cada uma vira um bloco: rótulo pequeno em cima e valor em destaque embaixo.
+   (Só os selos informativos <span>; os botões continuam como estão.) */
+html[data-visual="executivo"] span.month-badge{
+  display:inline-flex;flex-direction:column;align-items:flex-start;gap:2px;
+  font-size:.66rem;font-weight:600;text-transform:uppercase;letter-spacing:.08em;
+  color:var(--ink-dim);line-height:1.2;padding:2px 18px;
+}
+html[data-visual="executivo"] span.month-badge b{
+  font-size:1.02rem;font-weight:600;text-transform:none;letter-spacing:0;color:var(--ink);
+}
+
+/* ---------- Indicadores: faixa em destaque ----------
+   Caixa própria, linha forte no topo, rótulos em maiúsculas pequenas e
+   números em sans-serif forte (a serifada deixava os números estranhos). */
+html[data-visual="executivo"] .summary-grid{
+  margin:20px 0 28px;border:1px solid var(--line);border-top:3px solid var(--ink);
+  background:var(--paper-raised);
+}
+html[data-visual="executivo"] .summary-card{padding:20px 22px 24px;}
+html[data-visual="executivo"] .summary-label{
+  text-transform:uppercase;letter-spacing:.07em;font-size:.68rem;font-weight:600;
+  margin-bottom:14px;
+}
+html[data-visual="executivo"] .summary-value{
+  font-family:var(--sans);font-weight:600;letter-spacing:-.025em;
+  font-size:clamp(1.5rem,2.3vw,2rem);line-height:1;
+}
+/* Números de todos os indicadores na mesma linha, mesmo quando o rótulo
+   ocupa uma ou duas linhas: o card vira coluna e o número vai para a base */
+html[data-visual="executivo"] .summary-card{display:flex;flex-direction:column;justify-content:space-between;}
+
+
+/* ---------- Cabeçalho em uma única linha (revisão 2) ----------
+   Antes as informações quebravam para uma 2ª linha, deixando um bloco
+   vazio à esquerda. Em telas largas fica tudo na mesma linha:
+   logos | título ........ Meta | Real | Atualizado  [Clássico|Executivo] [Admin]
+   Se faltar espaço, o subtítulo encolhe e termina em "…".
+   Em telas mais estreitas (abaixo de 1280px) volta a quebrar. */
+@media (min-width:1280px){
+  html[data-visual="executivo"] .topbar-inner{flex-wrap:nowrap;gap:14px;padding:12px 24px;}
+  html[data-visual="executivo"] .month-badges{flex-wrap:nowrap;flex-shrink:0;}
+  html[data-visual="executivo"] .brand-text{flex:1 1 auto;min-width:0;}
+  html[data-visual="executivo"] .brand-sub{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+}
+/* Espaçamentos mais compactos no topo */
+html[data-visual="executivo"] span.month-badge{padding:2px 14px;}
+html[data-visual="executivo"] .visual-toggle{margin-left:10px;}
+html[data-visual="executivo"] #btnAdmin{margin-left:8px;}
+html[data-visual="executivo"] .brand-name{font-size:1.3rem;}
+
+
+/* ---------- Cabeçalho da tela de admin (revisão 3) ----------
+   Linha 1 (sessão): texto pequeno e discreto -> "Administrador (admin) | Alterar senha | Sair"
+   Linha 2 (contexto): METAS ATUAIS em bloco | Abrir painel (botão) | Clássico/Executivo */
+html[data-visual="executivo"] .topbar-direita{gap:8px;}
+html[data-visual="executivo"] .topbar-sessao .month-badge,
+html[data-visual="executivo"] .topbar-sessao span.month-badge{
+  display:inline-flex;flex-direction:row;align-items:center;
+  font-size:.76rem;font-weight:500;text-transform:none;letter-spacing:0;
+  color:var(--ink-dim);padding:0 12px;line-height:1.4;
+}
+html[data-visual="executivo"] .topbar-sessao span.month-badge b{font-size:.78rem;font-weight:600;color:var(--ink);}
+html[data-visual="executivo"] .topbar-sessao button.month-badge{color:var(--ink-dim);}
+html[data-visual="executivo"] .topbar-sessao button.month-badge:hover{color:var(--red);}
+html[data-visual="executivo"] .topbar-sessao .month-badge:last-child{padding-right:0;}
+html[data-visual="executivo"] .topbar-contexto{align-items:center;}
+/* "Abrir painel": mesmo botão de contorno do "Admin" no painel */
+html[data-visual="executivo"] #btnPainel{
+  border:1px solid var(--ink);border-radius:3px;padding:5px 14px;margin-left:8px;color:var(--ink);
+}
+html[data-visual="executivo"] #btnPainel:hover{background:var(--ink);color:var(--paper-raised);}
+/* Sem ícones de emoji no Executivo */
+html[data-visual="executivo"] .icone-usuario,
+html[data-visual="executivo"] .admin-step.icone{display:none;}
