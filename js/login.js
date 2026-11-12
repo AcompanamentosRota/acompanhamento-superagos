@@ -19,6 +19,15 @@
   // Nome da chave de sessão no sessionStorage (o admin.js usa o mesmo)
   var CHAVE_SESSAO = 'superagosAdminChave';
 
+  // Painel publicado no GitHub Pages (link do time comercial): lá não
+  // existe API, então o admin não funciona. Esconde o botão e para aqui.
+  // O admin continua acessível pela API local (http://localhost:3000).
+  if (/\.github\.io$/i.test(location.hostname)) {
+    // style.display (e não "hidden"): o CSS do botão define display
+    document.getElementById('btnAdmin').style.display = 'none';
+    return;
+  }
+
   var modal = document.getElementById('loginModal');
   var form = document.getElementById('loginForm');
   var usuario = document.getElementById('loginUsuario');

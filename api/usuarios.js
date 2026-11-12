@@ -25,10 +25,10 @@ const ARQUIVO_USUARIOS = path.join(__dirname, "usuarios.json");
 const ARQUIVO_ENV = path.join(__dirname, ".env");
 
 // Primeiro usuário, criado se não existir nenhum.
-// A senha está escrita aqui no código, por isso nasce como
-// provisória e precisa ser trocada no primeiro acesso.
+// A senha dele é gerada aleatoriamente na primeira vez que a API
+// é iniciada e aparece só no terminal (não fica escrita no código,
+// que é público no GitHub). Nasce provisória: troca no 1º acesso.
 const USUARIO_INICIAL = "admin";
-const SENHA_INICIAL = "superagos2026";
 
 const TAMANHO_MINIMO_SENHA = 8;
 
@@ -163,10 +163,13 @@ function inicializarUsuarios() {
 
     if (!lista.length) {
 
+        // Senha aleatória, no mesmo formato do reset (ex.: "K7mp-4Qxr")
+        const senhaInicial = gerarSenhaProvisoria();
+
         lista.push({
             usuario: USUARIO_INICIAL,
             nome: "Administrador",
-            hash: gerarHashSenha(SENHA_INICIAL),
+            hash: gerarHashSenha(senhaInicial),
             senhaProvisoria: true,
             criadoEm: new Date().toISOString(),
             ultimoAcesso: null
@@ -174,7 +177,11 @@ function inicializarUsuarios() {
 
         gravarUsuarios(lista);
 
-        mensagem = `Usuário inicial "${USUARIO_INICIAL}" criado. Troque a senha no primeiro acesso.`;
+        // Mostrada uma única vez, no terminal de quem iniciou a API.
+        // Se for perdida: node criar-senha.js
+        mensagem =
+            `Usuário inicial criado -> usuário: ${USUARIO_INICIAL}  senha provisória: ${senhaInicial}\n` +
+            "Anote agora: ela não será mostrada de novo. Troque a senha no primeiro acesso.";
     }
 
     return mensagem;
@@ -308,10 +315,6 @@ function definirSenha(usuario, novaSenha, senhaAnterior) {
 
     if (senhaAnterior !== undefined && novaSenha === senhaAnterior) {
         return "A nova senha precisa ser diferente da atual.";
-    }
-
-    if (novaSenha === SENHA_INICIAL) {
-        return "Não é permitido usar a senha inicial.";
     }
 
     const ok = atualizarUsuario(usuario, u => {

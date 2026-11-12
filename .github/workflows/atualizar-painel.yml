@@ -1,0 +1,105 @@
+# =====================================================================
+# ATUALIZAR E PUBLICAR O PAINEL (GitHub Actions + GitHub Pages)
+# ---------------------------------------------------------------------
+# O que faz:
+#   1) Consulta o SAP Datasphere (api/gerar-dados.js) e gera o
+#      js/dados.js com as metas (dados/metas.json) + real + online.
+#   2) Publica SÓ o painel no GitHub Pages (link do time comercial).
+#      O admin (admin.html) e a API (pasta api) NÃO são publicados.
+#
+# Quando roda:
+#   - De hora em hora (o GitHub pode atrasar alguns minutos);
+#   - A cada push na branch main (ex.: metas salvas pelo admin,
+#     mudanças no código do painel);
+#   - Manualmente: aba Actions > "Atualizar painel" > Run workflow.
+#
+# Os dados gerados NÃO são commitados: vão direto para o site.
+# Assim o histórico do repositório não recebe 24 commits por dia.
+#
+# Se a consulta ao SAP falhar, nada é publicado e o painel
+# continua no ar com a última atualização que deu certo.
+#
+# Credenciais do SAP: ficam nos Secrets do repositório
+# (Settings > Secrets and variables > Actions), nunca no código.
+# =====================================================================
+
+name: Atualizar painel
+
+on:
+  schedule:
+    # Minuto 5 de toda hora (horário UTC; o horário não importa
+    # aqui porque roda em todas as horas)
+    - cron: "5 * * * *"
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+# Permissões mínimas: ler o código e publicar no Pages
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Uma publicação por vez; se outra for disparada, espera a atual terminar
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  atualizar:
+    runs-on: ubuntu-latest
+
+    # Ambiente do Pages (mostra o link do site no resumo da execução)
+    environment:
+      name: github-pages
+      url: ${{ steps.publicar.outputs.page_url }}
+
+    env:
+      # Fuso de São Paulo: as datas da consulta ("hoje", início do mês)
+      # e o "Real atualizado até" saem no horário de Brasília.
+      # Sem isso o servidor do GitHub usaria UTC (3 horas à frente).
+      TZ: America/Sao_Paulo
+
+    steps:
+      - name: Baixar o código
+        uses: actions/checkout@v4
+
+      - name: Instalar o Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: api/package-lock.json
+
+      - name: Instalar as bibliotecas da API
+        working-directory: api
+        run: npm ci
+
+      - name: Consultar o SAP e gerar js/dados.js
+        working-directory: api
+        run: node gerar-dados.js
+        env:
+          SAP_TOKEN_URL: ${{ secrets.SAP_TOKEN_URL }}
+          SAP_CLIENT_ID: ${{ secrets.SAP_CLIENT_ID }}
+          SAP_CLIENT_SECRET: ${{ secrets.SAP_CLIENT_SECRET }}
+          SAP_DATASPHERE_URL: ${{ secrets.SAP_DATASPHERE_URL }}
+
+      # Pasta só com os arquivos do painel (o que vai para o site)
+      - name: Montar a pasta do site
+        run: |
+          mkdir -p _site/js
+          cp index.html _site/
+          cp -r css _site/
+          cp js/dados.js js/app.js js/visual.js js/login.js _site/js/
+
+      - name: Configurar o GitHub Pages
+        uses: actions/configure-pages@v5
+
+      - name: Empacotar o site
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+      - name: Publicar no GitHub Pages
+        id: publicar
+        uses: actions/deploy-pages@v4

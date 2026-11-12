@@ -14,6 +14,9 @@ const { lerMetas, validarMetas, salvarMetas } = require("./metas");
 // Geração do js/dados.js (o mesmo script que o robô roda)
 const { gerarDados } = require("./gerar-dados");
 
+// Envio do dados/metas.json para o repositório (painel publicado)
+const { enviarMetasParaGitHub } = require("./github");
+
 // Login e sessões do admin (sessões de 8 horas)
 const {
     segundosBloqueado,
@@ -29,7 +32,8 @@ const {
 const usuarios = require("./usuarios");
 
 // Primeira execução: migra o login antigo do .env ou cria o
-// usuário inicial (admin / senha inicial, a trocar no 1º acesso)
+// usuário inicial (admin / senha aleatória mostrada no terminal,
+// a trocar no 1º acesso)
 const mensagemUsuarios = usuarios.inicializarUsuarios();
 if (mensagemUsuarios) console.log(mensagemUsuarios);
 
@@ -371,7 +375,7 @@ app.delete("/api/admin/usuarios/:usuario", exigirLogin, exigirSenhaDefinitiva, (
 // ADMIN: METAS E PVs
 // ======================================================
 // Usadas pela tela admin.html. Só funcionam com login.
-// (No GitHub, a tela passará a gravar direto no repositório.)
+// Ao salvar, as metas também são enviadas ao GitHub (api/github.js).
 
 // Devolve as metas atuais (a tela compara com a planilha nova)
 app.get("/api/admin/metas", exigirLogin, exigirSenhaDefinitiva, (req, res) => {
@@ -411,7 +415,11 @@ app.post("/api/admin/metas", exigirLogin, exigirSenhaDefinitiva, async (req, res
 
     console.log(`Metas salvas por ${req.usuario.usuario}: ${req.body.clientes.length} PVs (${req.body.mes})`);
 
-    // As metas já estão salvas. Se a geração do painel falhar
+    // Envia as metas para o GitHub (o commit dispara a atualização do
+    // painel publicado). Roda junto com a geração local, em paralelo.
+    const envioGitHub = enviarMetasParaGitHub(req.usuario.usuario);
+
+    // As metas já estão salvas. Se a geração do painel local falhar
     // (ex.: SAP fora do ar), o robô gera na próxima hora.
     try {
 
@@ -420,7 +428,8 @@ app.post("/api/admin/metas", exigirLogin, exigirSenhaDefinitiva, async (req, res
         res.json({
             status: "sucesso",
             mensagem: "Metas salvas e painel atualizado.",
-            resumo
+            resumo,
+            github: await envioGitHub
         });
 
     } catch (error) {
@@ -432,7 +441,8 @@ app.post("/api/admin/metas", exigirLogin, exigirSenhaDefinitiva, async (req, res
             mensagem:
                 "Metas salvas, mas o painel não foi atualizado agora " +
                 "(erro ao consultar o SAP). Ele será atualizado na próxima execução do robô.",
-            detalhe: error.response?.data || error.message
+            detalhe: error.response?.data || error.message,
+            github: await envioGitHub
         });
     }
 });

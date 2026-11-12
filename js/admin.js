@@ -436,7 +436,11 @@
           }
           html += '<br><a href="index.html">Abrir o painel &rarr;</a>';
         }
-        mensagem($('msgSalvar'), r.status === 'sucesso' ? 'ok' : 'aviso', html);
+        // Resultado do envio ao GitHub (painel publicado para o time)
+        var envioOk = !r.github || r.github.status === 'ok';
+        if (r.github) html += '<br>' + (envioOk ? '' : '<b>Atenção:</b> ') + esc(r.github.mensagem);
+        // Amarelo se o SAP falhou ou se o GitHub não recebeu as metas
+        mensagem($('msgSalvar'), r.status === 'sucesso' && envioOk ? 'ok' : 'aviso', html);
         // Recarrega a lista atual (agora é a que acabou de ser salva)
         carregarAtual();
       })
