@@ -93,6 +93,16 @@ jobs:
           cp -r css _site/
           cp js/dados.js js/app.js js/visual.js js/login.js js/github.js js/admin.js _site/js/
 
+      # Evita o navegador mostrar dados velhos: o GitHub Pages manda guardar
+      # os arquivos por 10 minutos (cache). Cada publicação ganha um número
+      # de versão no endereço dos .js e .css (ex.: js/dados.js?v=123-1);
+      # para o navegador é um arquivo novo, então ele sempre baixa o atual.
+      - name: Marcar a versão dos arquivos (anti-cache)
+        run: |
+          VERSAO="${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          sed -i -E "s#(src=\"js/[a-z-]+\.js)\"#\1?v=${VERSAO}\"#g; s#(href=\"css/[a-z-]+\.css)\"#\1?v=${VERSAO}\"#g" _site/index.html _site/admin.html
+          grep -o 'js/dados.js?v=[^"]*' _site/index.html
+
       - name: Configurar o GitHub Pages
         uses: actions/configure-pages@v5
 
